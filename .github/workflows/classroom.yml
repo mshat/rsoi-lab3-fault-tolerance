@@ -1,0 +1,100 @@
+name: GitHub Classroom Workflow
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+jobs:
+  build:
+    name: Autograding
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # TODO build, test and deploy project
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install Dependencies gateway
+        run: |
+          cd ./services/gateway
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Dependencies loyalty
+        run: |
+          cd ./services/loyalty
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Dependencies payment
+        run: |
+          cd ./services/payment
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Dependencies reservation
+        run: |
+          cd ./services/reservation
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Deploy project Gateway
+        uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          heroku_api_key: 0e65cd29-773b-4f97-84d3-bea254ce2665
+          heroku_app_name: lab2-gateway
+          heroku_email: privedtmedved@gmail.com
+          appdir: ./services/gateway/
+          usedocker: true
+
+      - name: Deploy project loyalty
+        uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          heroku_api_key: 0e65cd29-773b-4f97-84d3-bea254ce2665
+          heroku_app_name: lab2-loyalty
+          heroku_email: privedtmedved@gmail.com
+          appdir: ./services/loyalty/
+          usedocker: true
+
+      - name: Deploy project payment
+        uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          heroku_api_key: 0e65cd29-773b-4f97-84d3-bea254ce2665
+          heroku_app_name: lab2-payment
+          heroku_email: privedtmedved@gmail.com
+          appdir: ./services/payment/
+          usedocker: true
+
+      - name: Deploy project Reservation
+        uses: akhileshns/heroku-deploy@v3.4.6
+        with:
+          heroku_api_key: 0e65cd29-773b-4f97-84d3-bea254ce2665
+          heroku_app_name: lab2-reservation-2
+          heroku_email: privedtmedved@gmail.com
+          appdir: ./services/reservation/
+          usedocker: true
+
+      # TODO build, test and deploy project
+
+      - name: Run API Tests
+        uses: matt-ball/newman-action@master
+        with:
+          # TODO insert your <Variant> and <ServiceName>
+          collection: v2/postman/[rsoi] postman_collection.json
+          environment: v2/postman/[rsoi][heroku] postman_environment.json
+          delayRequest: 100
+          reporters: '[ "cli" ]'
+          envVar: '[{ "key":"serviceName", "value":"lab2-loyalty" }, { "key":"herokuApiToken", "value":"0e65cd29-773b-4f97-84d3-bea254ce2665" }]'
+
+      - uses: education/autograding@v1
+        id: autograder
+        continue-on-error: true

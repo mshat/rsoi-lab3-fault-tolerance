@@ -1,0 +1,82 @@
+version: "3"
+services:
+#  postgres:
+#    image: library/postgres:13
+#    container_name: postgres
+#    restart: on-failure
+#    environment:
+#      POSTGRES_USER: postgres
+#      POSTGRES_PASSWORD: postgres
+#      POSTGRES_DB: postgres
+#    volumes:
+#      - db-data:/var/lib/postgresql/data
+#      - ./postgres/:/docker-entrypoint-initdb.d/
+#    ports:
+#      - 5432:5432
+
+  gateway-service:
+    # Берем Dockerfile из каталога reservation
+    build: ./services/gateway
+    # Запускаем тестовый сервер
+    command: python manage.py runserver 0.0.0.0:8000
+    # куда будут помещены данные из каталога gateway
+    volumes:
+      - ./services/gateway/:/usr/src/gateway
+    # Открываем порт 8000 внутри и снаружи
+    ports:
+      - 8000:8000
+
+  redis_worker:
+    build: ./services/redis_queue
+    command: python startredis.py
+    ports:
+      - 8004:8004
+
+#  redis:
+#    image: "redis:alpine"
+#    container_name: redis
+#    ports:
+#      - 6379:6379
+
+  reservation-service:
+    # Берем Dockerfile из каталога reservation
+    build: ./services/reservation
+    # Запускаем тестовый сервер
+    #command: python manage.py runserver 0.0.0.0:8001
+    command: /bin/sh -c "python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8001"
+    # куда будут помещены данные из каталога reservation
+    volumes:
+      - ./services/reservation/:/usr/src/reservation
+    # Открываем порт 8000 внутри и снаружи
+    ports:
+      - 8001:8001
+
+  loyalty-service:
+    # Берем Dockerfile из каталога reservation
+    build: ./services/loyalty
+    # Запускаем тестовый сервер
+    #command: python manage.py runserver 0.0.0.0:8001
+    command: /bin/sh -c "python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8003"
+    # куда будут помещены данные из каталога reservation
+    volumes:
+      - ./services/loyalty/:/usr/src/loyalty
+    # Открываем порт 8000 внутри и снаружи
+    ports:
+      - 8003:8003
+
+  payment-service:
+    # Берем Dockerfile из каталога reservation
+    build: ./services/payment
+    # Запускаем тестовый сервер
+    #command: python manage.py runserver 0.0.0.0:8001
+    command: /bin/sh -c "python3 manage.py makemigrations && python3 manage.py migrate && python3 manage.py runserver 0.0.0.0:8002"
+    # куда будут помещены данные из каталога reservation
+    volumes:
+      - ./services/payment/:/usr/src/payment
+    # Открываем порт 8000 внутри и снаружи
+    ports:
+      - 8002:8002
+
+
+volumes:
+  db-data:
